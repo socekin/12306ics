@@ -30,7 +30,7 @@ def connect_to_email(username, password):
 # 搜索指定发件人的邮件
 def search_for_12306_emails(mail):
     mail.select('INBOX')  # 选择INBOX文件夹
-    typ, data = mail.search(None, 'FROM', "\"demon-1988@163.com\"")  # Adjust the email address as needed
+    typ, data = mail.search(None, 'FROM', "\"12306@rails.com.cn\"")  # Adjust the email address as needed
     if typ == 'OK':
         print(f"Search successful, found {len(data[0].split())} emails")
         return data[0].split()
