@@ -23,5 +23,5 @@ Docker build --no-cache -t ticket-extractor .
 然后启动Docker
 
 ```
-docker run -d -p 2306:5000 ticket-extractor
+docker run -d -p 2306:2306 ticket-extractor
 ```
