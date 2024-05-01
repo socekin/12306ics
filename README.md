@@ -25,3 +25,9 @@ Docker build --no-cache -t ticket-extractor .
 ```
 docker run -d -p 2306:2306 ticket-extractor
 ```
+
+订阅ics
+
+```
+服务器ip:2306/download_ics
+```
