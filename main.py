@@ -63,9 +63,11 @@ def fetch_and_parse_email(mail, email_id):
     typ, data = mail.fetch(email_id, '(RFC822)')
     if typ == 'OK':
         msg = email.message_from_bytes(data[0][1])
+        body = ""
         if msg.is_multipart():
             for part in msg.walk():
-                if part.get_content_type() == 'text/plain':
+                # 检查部分是否为text/plain或text/html
+                if part.get_content_type() in ['text/plain', 'text/html']:
                     charset = part.get_content_charset()
                     if charset is None:
                         charset = 'utf-8'
