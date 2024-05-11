@@ -6,7 +6,7 @@
 
 ## 主要功能
 - 从QQ邮箱获取12306的邮件，自动解析车票信息，并生成ics文件
-- 每分钟获取一次邮件
+- 每分钟获取一次邮件的车票信息
 
 ## Docker部署说明
 
@@ -15,7 +15,7 @@
 3. Clone本项目
 4. 采用docker进行部署
 
-Build
+Build Docker
 
 ```
 docker build --no-cache -t ticket-extractor .
