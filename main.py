@@ -84,10 +84,11 @@ def fetch_and_parse_email(mail, email_id):
 # 提取车票信息
 def extract_ticket_info(email_content):
     print("[INFO] 开始提取车票信息...")
-    pattern = r"(\d{4}年\d{2}月\d{1,2}日)(\d{2}:\d{2})开，(.+?站)-(.+?站)，(G\d+)次列车，(\d+车\d+[A-Z]号)，(.+?)，(.+?)，票价(\d+\.\d+)元，检票口(\d+[A-Z]+?)，电子客票。"
+    pattern = r"(\d{4}年\d{2}月\d{1,2}日)(\d{2}:\d{2})开[，,](.+?站)-(.+?站)[，,](G\d+)次列车[，,](\d+车\d+[A-Z]号)[，,](.+?)[，,]票价(\d+\.\d+)元[，,]检票口([A-Z\d]+)"
     match = re.search(pattern, email_content, re.DOTALL)
     if match:
-        travel_date, travel_time, from_station, to_station, train_number, seat, seat_type, ticket_type, price, gate = match.groups()
+        # 正则表达式中实际上有9个匹配组
+        travel_date, travel_time, from_station, to_station, train_number, seat, seat_type, price, gate = match.groups()
         full_travel_date = f"{travel_date} {travel_time}开"
         ticket_info = {
             "travel_date": full_travel_date,
@@ -95,8 +96,7 @@ def extract_ticket_info(email_content):
             "to_station": to_station,
             "train_number": train_number,
             "seat": seat,
-            "seat_type": seat_type,
-            "ticket_type": ticket_type,
+            "seat_type": seat_type,  # 添加座位类型
             "price": price,
             "gate": gate
         }
@@ -113,21 +113,24 @@ def create_ics(ticket_info):
     print("[INFO] 开始创建ICS文件...")
     try:
         tz = pytz.timezone('Asia/Shanghai')
-        # 确保从字符串中去除“开”字以匹配正确的格式
         departure_time_str = ticket_info["travel_date"].replace("开", "")
         departure_time = datetime.strptime(departure_time_str, "%Y年%m月%d日 %H:%M")
         departure_time = tz.localize(departure_time)
-        duration = timedelta(hours=2)  # 假设行程时间或者您可以根据具体车次确定持续时间
+        duration = timedelta(hours=2)  # 仅作为行程时间示例，根据具体情况可以调整
         arrival_time = departure_time + duration
 
         event = Event()
         event.name = f"列车行程: {ticket_info['train_number']} 次 {ticket_info['from_station']} - {ticket_info['to_station']}"
         event.begin = departure_time
         event.end = arrival_time
-        event.description = (f"车次: {ticket_info['train_number']}\n座位: {ticket_info['seat']}\n座位类型: {ticket_info['seat_type']}\n票价: "
-                             f"{ticket_info['price']}元\n检票口: {ticket_info['gate']}\n出发站: {ticket_info['from_station']}\n到达站: {ticket_info['to_station']}")
+        event.description = (f"车次: {ticket_info['train_number']}\n"
+                             f"座位: {ticket_info['seat']}\n" 
+                             f"座位类型: {ticket_info['seat_type']}\n"  # 追加座位类型
+                             f"票价: {ticket_info['price']}元\n"
+                             f"检票口: {ticket_info['gate']}\n"
+                             f"出发站: {ticket_info['from_station']}\n"
+                             f"到达站: {ticket_info['to_station']}")
         event.location = f"{ticket_info['from_station']} 至 {ticket_info['to_station']}"
-
 
         calendar = Calendar()
         calendar.events.add(event)
