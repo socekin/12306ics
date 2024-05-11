@@ -18,7 +18,7 @@
 Build
 
 ```
-Docker build --no-cache -t ticket-extractor .
+docker build --no-cache -t ticket-extractor .
 ```
 
 然后启动Docker
