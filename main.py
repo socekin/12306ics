@@ -98,7 +98,7 @@ def extract_ticket_info(email_content):
             "seat": seat,
             "seat_type": seat_type,  # 添加座位类型
             "price": price,
-            "gate": gate
+            "gate": gate if gate else "无",
         }
         print("[INFO] 提取到的车票信息: ", ticket_info)
         return ticket_info
