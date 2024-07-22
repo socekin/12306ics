@@ -84,7 +84,7 @@ def fetch_and_parse_email(mail, email_id):
 # 提取车票信息
 def extract_ticket_info(email_content):
     print("[INFO] 开始提取车票信息...")
-    pattern = r"(\d{4}年\d{2}月\d{1,2}日)(\d{2}:\d{2})开[，,](.+?站)-(.+?站)[，,](G\d+)次列车[，,](\d+车\d+[A-Z]号)[，,](.+?)[，,]票价(\d+\.\d+)元[，,]检票口([A-Z\d]+)"
+    pattern = r"(\d{4}年\d{2}月\d{1,2}日)(\d{2}:\d{2})开[，,](.+?站)-(.+?站)[，,](G\d+)次列车[，,](\d+车\d+[A-Z]号)[，,](.+?)[，,](?:.+?票[，,])?票价(\d+\.\d+)元[，,]?(?:检票口(\w+))?(?:，.+)?"
     match = re.search(pattern, email_content, re.DOTALL)
     if match:
         # 正则表达式中实际上有9个匹配组
