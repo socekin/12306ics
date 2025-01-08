@@ -1,4 +1,11 @@
+playwright>=1.40.0
+beautifulsoup4>=4.12.2
+lxml>=4.9.3
 Flask
 APScheduler
 ics
 pytz
+imap-tools>=1.0.0
+python-dotenv
+requests>=2.31.0
+typing-extensions>=4.5.0

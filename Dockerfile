@@ -1,36 +1,50 @@
-# 使用官方 Python 运行时作为父镜像
-FROM python:3.8-slim
+# 使用 Python 3.9 基础镜像
+FROM python:3.9-slim
 
-# 安装 cron 服务
-RUN apt-get update && apt-get install -y cron
-
-# 设置工作目录为 /app
-RUN mkdir -p /app/ics
+# 设置工作目录
 WORKDIR /app
 
-# 创建一个记录 cron 执行日志的目录和文件
-RUN touch /var/log/cron.log
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    # Playwright 依赖
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
 
-# 将当前目录内容复制到位于 /app 的容器中
-COPY . /app
+# 复制项目文件
+COPY . .
 
-# 安装 requirements.txt 中的所有依赖
+# 安装 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 添加 cron 任务
-# 假设你想每小时运行一次 run_script.py
-# 注意替换 /app/run_script.py 为你 run_script.py 文件的实际路径
-# 你可以根据需要改变 * * * * * 来调整运行频率
-RUN echo "* * * * * root cd /app && /usr/local/bin/python run_script.py >> /var/log/cron.log 2>&1" > /etc/cron.d/run_script_cron
+# 安装 Playwright 浏览器
+RUN python -m playwright install chromium --with-deps
 
-# 给 cron 任务文件设置正确的权限
-RUN chmod 0644 /etc/cron.d/run_script_cron
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=app.py
 
-# 应用 cron 任务
-RUN crontab /etc/cron.d/run_script_cron
+# 设置启动脚本权限
+RUN chmod +x start.sh
 
-# 对外暴露端口 2306
+# 暴露端口
 EXPOSE 2306
 
-# 在容器启动时运行 main.py 以及启动 cron
-CMD cron && python main.py
+# 启动命令
+CMD ["./start.sh"]

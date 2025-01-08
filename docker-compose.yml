@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  ticket-calendar:
+    container_name: 12306ticket
+    build: .
+    ports:
+      - "2306:2306"
+    volumes:
+      - ./ics:/app/ics
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Shanghai
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2306/ticket"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
