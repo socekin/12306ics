@@ -34,17 +34,28 @@ def connect_to_email(username, password):
 
 def search_for_12306_emails(mail):
     """搜索12306邮件"""
-    # 选择收件箱
-    mail.select('INBOX')
-    
-    # 搜索来自 12306@rails.com.cn 的邮件
-    typ, data = mail.search(None, 'FROM', '12306@rails.com.cn')
-    if typ != 'OK':
+    try:
+        # 选择收件箱
+        mail.select('INBOX')
+        
+        # 搜索来自目标发件人的邮件
+        target_sender = os.getenv("TARGET_SENDER")
+        if not target_sender:
+            print("错误：未设置 TARGET_SENDER 环境变量")
+            return []
+            
+        print(f"搜索发件人: {target_sender} 的邮件")
+        typ, data = mail.search(None, 'FROM', target_sender)
+        if typ != 'OK':
+            print(f"搜索邮件失败: {typ}")
+            return []
+        
+        email_ids = data[0].split()
+        print(f"找到 {len(email_ids)} 封邮件")
+        return email_ids
+    except Exception as e:
+        print(f"搜索邮件错误: {str(e)}")
         return []
-    
-    email_ids = data[0].split()
-    
-    return email_ids
 
 def get_email_date(mail, email_id):
     """获取邮件日期"""

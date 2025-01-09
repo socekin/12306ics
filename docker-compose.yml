@@ -13,8 +13,3 @@ services:
     environment:
       - TZ=Asia/Shanghai
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:2306/ticket"]
-      interval: 5m
-      timeout: 10s
-      retries: 3
