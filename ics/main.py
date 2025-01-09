@@ -6,6 +6,7 @@ import json
 import datetime
 import sys
 import os
+import logging
 from dotenv import load_dotenv
 import pytz
 from ics import Calendar, Event
@@ -115,6 +116,12 @@ def extract_ticket_info(email_content):
         
         # 查询到达时间
         arrival_time = query_arrival_time(formatted_date, train_number, to_station)
+        if not arrival_time:
+            # 如果查询不到到达时间，使用出发时间加2小时作为预估到达时间
+            departure_time_obj = datetime.datetime.strptime(travel_time, "%H:%M")
+            arrival_time_obj = departure_time_obj + datetime.timedelta(hours=2)
+            arrival_time = arrival_time_obj.strftime("%H:%M")
+            logging.warning(f"无法获取到达时间，使用预估时间：{arrival_time}")
         
         ticket_info = {
             "date": formatted_date,

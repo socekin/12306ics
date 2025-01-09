@@ -38,9 +38,28 @@ def process_new_emails():
         with MailBox(IMAP_SERVER).login(EMAIL, PASSWORD) as mailbox:
             logging.info("成功登录邮箱")
             
-            # 获取12306邮件
-            logging.debug("开始检查12306邮件...")
-            messages = mailbox.fetch(AND(from_=TARGET_SENDER))
+            # 选择收件箱
+            mailbox.folder.set('INBOX')
+            
+            # 先获取所有邮件，查看发件人格式
+            logging.debug("获取所有邮件以检查发件人格式...")
+            all_messages = list(mailbox.fetch('ALL'))
+            logging.debug(f"共获取到 {len(all_messages)} 封邮件")
+            
+            found_target = False
+            for msg in all_messages:
+                if TARGET_SENDER in msg.from_:
+                    found_target = True
+                    logging.debug(f"找到目标发件人邮件 - 完整发件人: {msg.from_}, 主题: {msg.subject}, 日期: {msg.date}")
+            
+            if not found_target:
+                logging.debug("在所有邮件中未找到目标发件人，可能是发件人格式不匹配")
+            
+            # 使用 IMAP 搜索条件
+            logging.debug("开始使用IMAP搜索12306邮件...")
+            search_criteria = f'FROM "{TARGET_SENDER}"'
+            messages = list(mailbox.fetch(search_criteria))
+            logging.debug(f"搜索条件 '{search_criteria}' 找到 {len(messages)} 封邮件")
             
             # 将邮件按日期排序，获取最新的邮件
             latest_msg = None
