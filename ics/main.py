@@ -145,8 +145,22 @@ def get_latest_ticket_info(username, password):
         print("未找到12306邮件")
         return None
 
-    # 获取最新邮件
-    latest_email_id = email_ids[-1]
+    # 获取所有邮件的日期并排序
+    email_dates = []
+    for email_id in email_ids:
+        date = get_email_date(mail, email_id)
+        if date:
+            email_dates.append((email_id, date))
+    
+    if not email_dates:
+        print("无法获取邮件日期")
+        return None
+    
+    # 按日期排序并获取最新的邮件
+    latest_email = sorted(email_dates, key=lambda x: x[1], reverse=True)[0]
+    latest_email_id = latest_email[0]
+    
+    # 获取邮件内容
     email_content = fetch_and_parse_email(mail, latest_email_id)
     if not email_content:
         print("获取邮件内容失败")

@@ -38,38 +38,39 @@ def process_new_emails():
         with MailBox(IMAP_SERVER).login(EMAIL, PASSWORD) as mailbox:
             logging.info("成功登录邮箱")
             
-            # 获取未读邮件
-            logging.debug("开始获取未读邮件...")
-            messages = mailbox.fetch(AND(seen=False))
+            # 获取12306邮件
+            logging.debug("开始检查12306邮件...")
+            messages = mailbox.fetch(AND(from_=TARGET_SENDER))
+            
+            # 将邮件按日期排序，获取最新的邮件
+            latest_msg = None
+            latest_date = None
             
             for msg in messages:
-                logging.debug(f"处理邮件 - 发件人: {msg.from_}, 主题: {msg.subject}, 日期: {msg.date}")
-                
-                if TARGET_SENDER in msg.from_:
-                    logging.info(f"找到目标邮件！发件人: {msg.from_}, 主题: {msg.subject}")
+                if latest_date is None or msg.date > latest_date:
+                    latest_msg = msg
+                    latest_date = msg.date
+            
+            if latest_msg:
+                logging.info(f"找到最新的12306邮件 - 发送时间: {latest_msg.date}, 主题: {latest_msg.subject}")
+                try:
+                    # 运行 main.py
+                    logging.debug(f"使用 Python 解释器: {PYTHON_PATH}")
+                    logging.debug("开始执行 main.py")
+                    result = subprocess.run([PYTHON_PATH, 'ics/main.py'], 
+                                         check=True,
+                                         capture_output=True,
+                                         text=True)
+                    logging.info("成功运行 main.py")
+                    logging.debug(f"main.py 输出: {result.stdout}")
                     
-                    try:
-                        # 运行 main.py
-                        logging.debug(f"使用 Python 解释器: {PYTHON_PATH}")
-                        logging.debug("开始执行 main.py")
-                        result = subprocess.run([PYTHON_PATH, 'ics/main.py'], 
-                                             check=True,
-                                             capture_output=True,
-                                             text=True)
-                        logging.info("成功运行 main.py")
-                        logging.debug(f"main.py 输出: {result.stdout}")
-                        
-                        # 标记邮件为已读
-                        mailbox.flag(msg.uid, 'SEEN', True)
-                        logging.info("邮件已标记为已读")
-                        
-                    except subprocess.CalledProcessError as e:
-                        logging.error(f"运行 main.py 时出错: {str(e)}")
-                        logging.error(f"错误输出: {e.stderr}")
-                    except Exception as e:
-                        logging.error(f"处理邮件时发生错误: {str(e)}")
-                else:
-                    logging.debug(f"跳过非目标邮件，发件人: {msg.from_}")
+                except subprocess.CalledProcessError as e:
+                    logging.error(f"运行 main.py 时出错: {str(e)}")
+                    logging.error(f"错误输出: {e.stderr}")
+                except Exception as e:
+                    logging.error(f"处理邮件时发生错误: {str(e)}")
+            else:
+                logging.info("未找到12306邮件")
 
     except Exception as e:
         logging.error(f"连接邮箱时发生错误: {str(e)}")
