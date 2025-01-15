@@ -162,8 +162,13 @@ def create_calendar_event(ticket_info):
     departure_local = tz.localize(departure_naive)
     e.begin = departure_local
     
+    # 转换日期格式和站名格式
+    date_obj = datetime.datetime.strptime(ticket_info[0], "%Y年%m月%d日")
+    date_str = date_obj.strftime("%Y-%m-%d")
+    station_name = ticket_info[3].replace("站", "")
+    
     # 设置到达时间
-    arrival_time = query_arrival_time(ticket_info[0], ticket_info[4], ticket_info[3])
+    arrival_time = query_arrival_time(date_str, ticket_info[4], station_name)
     if not arrival_time:
         # 如果查询不到到达时间，使用出发时间加2小时作为预估到达时间
         departure_time_obj = datetime.datetime.strptime(ticket_info[1], "%H:%M")
@@ -194,45 +199,27 @@ def create_calendar_event(ticket_info):
     logging.info(f"  开始: {e.begin}")
     logging.info(f"  结束: {e.end}")
     logging.info(f"  描述: {e.description}")
+    
+    # 添加调试日志
+    logging.debug(f"查询到达时间的参数:")
+    logging.debug(f"  日期: {date_str}")
+    logging.debug(f"  车次: {ticket_info[4]}")
+    logging.debug(f"  站名: {station_name}")
+    logging.debug(f"查询结果: {arrival_time}")
+    
     return e
 
-def get_recent_tickets_info(username, password):
-    """获取最近的车票信息"""
-    mail = connect_to_email(username, password)
-    if not mail:
-        return []
-
-    email_ids = search_for_12306_emails(mail)
-    if not email_ids:
-        return []
-
-    # 按日期排序邮件
-    email_dates = [(email_id, get_email_date(mail, email_id)) for email_id in email_ids]
-    sorted_emails = sorted(email_dates, key=lambda x: x[1] or 0, reverse=True)[:7]  # 获取最近7封邮件
-
-    tickets_info = []
-    for email_id, _ in sorted_emails:
-        content = fetch_and_parse_email(mail, email_id)
-        if content:
+def process_email_file(file_path):
+    """处理单个邮件文件"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
             ticket_info = extract_ticket_info(content)
             if ticket_info:
-                tickets_info.append(ticket_info)
-
-    mail.logout()
-    return tickets_info
-
-def process_email_files(temp_dir):
-    """处理临时邮件文件"""
-    tickets_info = []
-    for file_name in os.listdir(temp_dir):
-        if file_name.startswith('email_') and file_name.endswith('.txt'):
-            file_path = os.path.join(temp_dir, file_name)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                ticket_info = extract_ticket_info(content)
-                if ticket_info:
-                    tickets_info.append(ticket_info)
-    return tickets_info
+                return ticket_info
+    except Exception as e:
+        logging.error(f"处理文件 {file_path} 时出错: {str(e)}")
+    return None
 
 def main():
     """主函数"""
@@ -242,50 +229,45 @@ def main():
         load_dotenv()
         logging.info("已加载环境变量")
         
-        # 检查是否有临时目录参数
+        # 检查临时目录参数
         parser = argparse.ArgumentParser()
-        parser.add_argument('--temp-dir', help='临时邮件文件目录')
+        parser.add_argument('--email-file', required=True, help='要处理的邮件文件路径')
         args = parser.parse_args()
         
-        tickets_info = []
-        if args.temp_dir and os.path.exists(args.temp_dir):
-            logging.info(f"从临时目录处理邮件: {args.temp_dir}")
-            # 从临时文件处理邮件
-            tickets_info = process_email_files(args.temp_dir)
-            logging.info(f"从临时文件中找到 {len(tickets_info)} 张车票")
-        else:
-            logging.info("从邮箱获取邮件")
-            # 从邮箱获取邮件（兼容旧的处理方式）
-            username = os.getenv("EMAIL_USERNAME")
-            password = os.getenv("EMAIL_PASSWORD")
-            if not username or not password:
-                logging.error("未设置邮箱账号或密码")
-                return
-            tickets_info = get_recent_tickets_info(username, password)
-            logging.info(f"从邮箱中找到 {len(tickets_info)} 张车票")
+        if not os.path.exists(args.email_file):
+            logging.error(f"邮件文件不存在: {args.email_file}")
+            return
+            
+        logging.info(f"处理邮件文件: {args.email_file}")
+        ticket_info = process_email_file(args.email_file)
         
-        if not tickets_info:
+        if not ticket_info:
             logging.warning("未找到有效的车票信息")
             return
 
-        # 创建日历
-        cal = Calendar()
-        logging.info("开始创建日历事件")
-        
-        # 为每张车票创建事件
-        for i, ticket_info in enumerate(tickets_info, 1):
-            logging.info(f"处理第 {i} 张车票")
-            event = create_calendar_event(ticket_info)
-            if event:
-                cal.events.add(event)
-                logging.info(f"已添加第 {i} 张车票的日历事件")
-
-        # 保存日历文件到 ics 目录
+        # 创建或加载现有日历
         current_dir = os.path.dirname(os.path.abspath(__file__))
         ics_file_path = os.path.join(current_dir, 'tickets.ics')
-        with open(ics_file_path, 'w', encoding='utf-8') as f:
-            f.write(str(cal))
-        logging.info(f"成功处理 {len(tickets_info)} 张车票信息并更新日历文件: {ics_file_path}")
+        
+        if os.path.exists(ics_file_path):
+            with open(ics_file_path, 'r', encoding='utf-8') as f:
+                cal = Calendar(f.read())
+            logging.info("已加载现有日历文件")
+        else:
+            cal = Calendar()
+            logging.info("创建新的日历文件")
+
+        # 创建事件
+        logging.info("开始创建日历事件")
+        event = create_calendar_event(ticket_info)
+        if event:
+            cal.events.add(event)
+            logging.info("已添加新的日历事件")
+
+            # 保存日历文件
+            with open(ics_file_path, 'w', encoding='utf-8') as f:
+                f.write(str(cal))
+            logging.info(f"已更新日历文件: {ics_file_path}")
 
     except Exception as e:
         logging.error(f"处理过程中发生错误: {str(e)}", exc_info=True)
