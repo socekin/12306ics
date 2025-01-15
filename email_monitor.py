@@ -137,8 +137,8 @@ def process_new_email(mailbox: MailBox) -> None:
                     f.write(content)
                 logging.debug(f"已保存邮件内容到临时文件: {temp_file}")
                 
-                # 调用 main.py 处理邮件
-                python_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'myenv', 'bin', 'python')
+                # 使用系统 Python 路径
+                python_path = 'python3' if os.path.exists('/app') else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'myenv', 'bin', 'python')
                 logging.debug(f"使用 Python 解释器: {python_path}")
                 logging.debug("开始执行 main.py")
                 
