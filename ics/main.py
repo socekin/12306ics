@@ -149,65 +149,81 @@ def extract_ticket_info(email_content):
 
 def create_calendar_event(ticket_info):
     """生成日历事件"""
-    c = Calendar()
-    e = Event()
-    e.name = f"{ticket_info[4]} {ticket_info[2]} - {ticket_info[3]}"
-    
-    # 创建中国时区
-    tz = pytz.timezone('Asia/Shanghai')
-    
-    # 设置出发时间
-    departure_str = f"{ticket_info[0]} {ticket_info[1]}:00"
-    departure_naive = datetime.datetime.strptime(departure_str, "%Y年%m月%d日 %H:%M:%S")
-    departure_local = tz.localize(departure_naive)
-    e.begin = departure_local
-    
-    # 转换日期格式和站名格式
-    date_obj = datetime.datetime.strptime(ticket_info[0], "%Y年%m月%d日")
-    date_str = date_obj.strftime("%Y-%m-%d")
-    station_name = ticket_info[3].replace("站", "")
-    
-    # 设置到达时间
-    arrival_time = query_arrival_time(date_str, ticket_info[4], station_name)
-    if not arrival_time:
-        # 如果查询不到到达时间，使用出发时间加2小时作为预估到达时间
-        departure_time_obj = datetime.datetime.strptime(ticket_info[1], "%H:%M")
-        arrival_time_obj = departure_time_obj + datetime.timedelta(hours=2)
-        arrival_time = arrival_time_obj.strftime("%H:%M")
-        logging.warning(f"无法获取到达时间，使用预估时间：{arrival_time}")
-    arrival_str = f"{ticket_info[0]} {arrival_time}:00"
-    arrival_naive = datetime.datetime.strptime(arrival_str, "%Y年%m月%d日 %H:%M:%S")
-    arrival_local = tz.localize(arrival_naive)
-    e.end = arrival_local
-    
-    e.description = f"座位：{ticket_info[5]}\n" \
-                   f"座位类型：{ticket_info[6]}\n" \
-                   f"票价：{ticket_info[7]}元\n" \
-                   f"检票口：{ticket_info[8]}"
-    logging.info("准备生成日历事件")
-    logging.info(f"日历事件基本信息:")
-    logging.info(f"  标题: {ticket_info[4]} {ticket_info[2]} - {ticket_info[3]}")
-    logging.info(f"  开始时间: {departure_local}")
-    logging.info(f"  结束时间: {arrival_local}")
-    logging.info(f"  描述内容:")
-    logging.info(f"    座位：{ticket_info[5]}")
-    logging.info(f"    座位类型：{ticket_info[6]}")
-    logging.info(f"    票价：{ticket_info[7]}元")
-    logging.info(f"    检票口：{ticket_info[8]}")
-    logging.info("最终生成的日历事件:")
-    logging.info(f"  名称: {e.name}")
-    logging.info(f"  开始: {e.begin}")
-    logging.info(f"  结束: {e.end}")
-    logging.info(f"  描述: {e.description}")
-    
-    # 添加调试日志
-    logging.debug(f"查询到达时间的参数:")
-    logging.debug(f"  日期: {date_str}")
-    logging.debug(f"  车次: {ticket_info[4]}")
-    logging.debug(f"  站名: {station_name}")
-    logging.debug(f"查询结果: {arrival_time}")
-    
-    return e
+    try:
+        logging.info("开始创建日历事件...")
+        c = Calendar()
+        e = Event()
+        e.name = f"{ticket_info[4]} {ticket_info[2]} - {ticket_info[3]}"
+        
+        # 创建中国时区
+        tz = pytz.timezone('Asia/Shanghai')
+        
+        # 设置出发时间
+        departure_str = f"{ticket_info[0]} {ticket_info[1]}:00"
+        logging.debug(f"原始出发时间字符串: {departure_str}")
+        departure_naive = datetime.datetime.strptime(departure_str, "%Y年%m月%d日 %H:%M:%S")
+        departure_local = tz.localize(departure_naive)
+        e.begin = departure_local
+        logging.debug(f"设置出发时间: {e.begin}")
+        
+        # 转换日期格式和站名格式
+        logging.debug(f"原始日期: {ticket_info[0]}")
+        date_obj = datetime.datetime.strptime(ticket_info[0], "%Y年%m月%d日")
+        date_str = date_obj.strftime("%Y-%m-%d")
+        logging.debug(f"转换后日期: {date_str}")
+        
+        logging.debug(f"原始站名: {ticket_info[3]}")
+        station_name = ticket_info[3].replace("站", "")
+        logging.debug(f"处理后站名: {station_name}")
+        
+        # 处理车次号
+        logging.debug(f"原始车次号: {ticket_info[4]}")
+        train_code = ticket_info[4].strip()
+        logging.debug(f"处理后车次号: {train_code}")
+        
+        # 设置到达时间
+        logging.info("开始查询到达时间...")
+        logging.debug(f"查询参数 - 日期: {date_str}, 车次: {train_code}, 站名: {station_name}")
+        arrival_time = query_arrival_time(date_str, train_code, station_name)
+        logging.debug(f"查询结果: {arrival_time}")
+        
+        if arrival_time:
+            try:
+                # 验证时间格式
+                datetime.datetime.strptime(arrival_time, "%H:%M")
+                arrival_str = f"{ticket_info[0]} {arrival_time}:00"
+                logging.info(f"成功获取到达时间: {arrival_time}")
+            except ValueError:
+                logging.warning(f"获取的到达时间格式无效: {arrival_time}")
+                arrival_time = ""
+        
+        if not arrival_time:
+            logging.warning("未能获取到达时间，将使用预估时间...")
+            # 如果查询不到到达时间，使用出发时间加2小时作为预估到达时间
+            departure_time_obj = datetime.datetime.strptime(ticket_info[1], "%H:%M")
+            arrival_time_obj = departure_time_obj + datetime.timedelta(hours=2)
+            arrival_time = arrival_time_obj.strftime("%H:%M")
+            arrival_str = f"{ticket_info[0]} {arrival_time}:00"
+            logging.warning(f"使用预估到达时间：{arrival_time}")
+            
+        logging.debug(f"完整到达时间字符串: {arrival_str}")
+        arrival_naive = datetime.datetime.strptime(arrival_str, "%Y年%m月%d日 %H:%M:%S")
+        arrival_local = tz.localize(arrival_naive)
+        e.end = arrival_local
+        logging.debug(f"设置到达时间: {e.end}")
+        
+        e.description = f"座位：{ticket_info[5]}\n" \
+                       f"座位类型：{ticket_info[6]}\n" \
+                       f"票价：{ticket_info[7]}元\n" \
+                       f"检票口：{ticket_info[8]}"
+        
+        logging.info("日历事件创建完成")
+        return e
+        
+    except Exception as e:
+        logging.error(f"创建日历事件时出错: {str(e)}")
+        logging.exception("详细错误信息:")
+        raise
 
 def process_email_file(file_path):
     """处理单个邮件文件"""
