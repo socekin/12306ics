@@ -13,6 +13,7 @@
 - 支持在线日历订阅
 - 提供Docker部署支持
 - 实时监听新邮件（使用 IMAP IDLE）
+- 可通过 CalDAV 将事件直接写入在线日历，实现秒级同步
 
 ## 更新日志
 
@@ -56,6 +57,10 @@
 EMAIL_USERNAME=你的QQ邮箱地址
 EMAIL_PASSWORD=你的QQ邮箱授权码  # 注意：这里需要使用QQ邮箱的授权码，不是登录密码
 TARGET_SENDER=12306@rails.com.cn  # 12306官方邮件地址
+CALDAV_URL=https://caldav.icloud.com/
+CALDAV_USERNAME=你的iCloud邮箱地址
+CALDAV_PASSWORD=你的iCloud应用专用密码
+CALDAV_CALENDAR_NAME=可选，指定要写入的日历
 ```
 
 获取QQ邮箱授权码：
@@ -84,7 +89,7 @@ docker-compose logs -f
 ```
 
 ### 3. 订阅日历
-在你的日历应用中添加订阅日历，URL格式：
+如果未配置 CalDAV，你仍可以订阅生成的 ICS 文件：
 ```
 http://服务器IP:2306/ticket
 ```
@@ -94,6 +99,8 @@ http://服务器IP:2306/ticket
 - Google Calendar
 - Outlook
 - 其他支持ICS订阅的日历应用
+
+启用 CalDAV 后，事件会直接写入指定的 iCloud 或其他 CalDAV 日历，可与手机使用的 iCloud 账户不同，只需在 `.env` 中提供对应的登录信息。
 
 ## 注意事项
 
