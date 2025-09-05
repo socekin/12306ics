@@ -29,6 +29,7 @@ logging.basicConfig(
 # 导入 train_query.py
 sys.path.insert(0, parent_dir)
 from train_query import query_arrival_time
+from calendar_service import add_event as push_event
 
 def connect_to_email(username, password):
     """连接到邮箱"""
@@ -284,6 +285,13 @@ def main():
             with open(ics_file_path, 'w', encoding='utf-8') as f:
                 f.write(str(cal))
             logging.info(f"已更新日历文件: {ics_file_path}")
+
+            # 推送到 CalDAV 日历
+            try:
+                push_event(event)
+                logging.info("已同步事件到 CalDAV 日历")
+            except Exception as e:
+                logging.error(f"同步到 CalDAV 日历失败: {e}")
 
     except Exception as e:
         logging.error(f"处理过程中发生错误: {str(e)}", exc_info=True)

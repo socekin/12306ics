@@ -9,3 +9,4 @@ imap-tools>=1.0.0
 python-dotenv
 requests>=2.31.0
 typing-extensions>=4.5.0
+caldav
