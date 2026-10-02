@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local development (wrangler dev). Never commit .dev.vars.
+INGEST_TOKEN=change-me
+CALENDAR_TOKEN=change-me
+CALDAV_USERNAME=you@icloud.com
+CALDAV_PASSWORD=app-specific-password

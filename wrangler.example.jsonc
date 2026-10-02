@@ -1,0 +1,23 @@
+// Copy to wrangler.jsonc (gitignored) and fill in your own values.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "12306ics",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-01",
+  "workers_dev": true,
+  // Optional: serve the Worker on your own domain (the zone must be on the same Cloudflare account).
+  // "routes": [{ "pattern": "12306.example.com", "custom_domain": true }],
+  "observability": { "enabled": true },
+  // Create with `npx wrangler kv namespace create STORE` and paste the id here.
+  "kv_namespaces": [{ "binding": "STORE", "id": "<your-kv-namespace-id>" }],
+  // Daily maintenance at 03:30 Asia/Shanghai: retry pending CalDAV pushes and re-query estimated arrivals.
+  "triggers": { "crons": ["30 19 * * *"] },
+  "vars": {
+    // Comma-separated sender addresses that are processed. Add your own address only while testing.
+    "ALLOWED_SENDERS": "12306@rails.com.cn",
+    "CALDAV_URL": "https://caldav.icloud.com/",
+    "CALDAV_CALENDAR_NAME": "12306",
+    "ALARM_MINUTES": "60"
+  }
+  // Secrets (set with `npx wrangler secret put <NAME>`): INGEST_TOKEN, CALENDAR_TOKEN, CALDAV_USERNAME, CALDAV_PASSWORD
+}

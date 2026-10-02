@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# Wrangler local state
+.wrangler/
+
+# Deployment config and secrets stay local; templates are committed instead
+wrangler.jsonc
+wrangler.toml
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*

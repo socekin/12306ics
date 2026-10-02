@@ -1,0 +1,36 @@
+{
+  "name": "12306ics",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Turn China Railway 12306 ticket emails into calendar events, on Cloudflare Workers",
+  "license": "MIT",
+  "author": "socekin",
+  "homepage": "https://github.com/socekin/12306ics#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/socekin/12306ics.git"
+  },
+  "bugs": {
+    "url": "https://github.com/socekin/12306ics/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "postal-mime": "^3.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.0.0",
+    "@types/node": "^26.4.1",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}
