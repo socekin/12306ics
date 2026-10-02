@@ -1,0 +1,43 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste raw 12306 emails, tokens, passwords, or your Worker URL. Emails contain your name and order details.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Which email type (purchase, rebooking, refund, …) and what you did.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Response or logs
+      description: The `/ingest` response, the `/raw` entry, or `npx wrangler tail` output, with personal details removed.
+      render: text
+  - type: dropdown
+    id: mail-source
+    attributes:
+      label: Mail source
+      options:
+        - Cloudflare Email Routing
+        - Gmail + Apps Script bridge
+        - Direct POST to /ingest
+    validations:
+      required: true
+  - type: input
+    id: calendar
+    attributes:
+      label: Calendar
+      description: CalDAV server (iCloud, …) or ICS subscription in which app.

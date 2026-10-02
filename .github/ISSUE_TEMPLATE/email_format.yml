@@ -1,0 +1,29 @@
+name: Unsupported or changed 12306 email
+description: An email from 12306 was not recognised or parsed incorrectly.
+labels: [email-format]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Anonymise the email before posting: replace passenger names with 乘客甲/乘客乙, order numbers with E20000000N, and remove ID numbers, phone numbers, and email addresses.
+  - type: input
+    id: subject
+    attributes:
+      label: Subject
+      placeholder: 网上购票系统-…
+    validations:
+      required: true
+  - type: textarea
+    id: body
+    attributes:
+      label: Anonymised email text
+      description: The ticket lines and the sentence containing the order number are the most useful parts.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What 12306ics did
+      description: The `/ingest` response or the reason shown in `/raw`.
+      render: text
